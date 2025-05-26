@@ -1,0 +1,150 @@
+#include <WebSocketsServer.h>
+#include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+
+// Identifiants WiFi
+const char* ssid = "NETGEAREA758B-g026";
+const char* password = "boulerouge62219!";
+const char* balise = "Laser 1"; // Nom de la balise
+
+ESP8266WebServer server(80);
+WiFiClient client;
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+// Variables
+volatile int pulses = 1500; // ⚠️ Initialisation à 1500 personnes
+volatile bool flag = false;
+unsigned long temps = 0;
+unsigned long seuilTemps = 300; // Anti-rebond (ms)
+
+String htmlPage = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Balise Laser Blaise Robotic</title>
+  <meta charset="UTF-8">
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  h1, h2, #place {
+    text-align: center;
+    color: #333;
+  }
+  button {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  </style>
+  <script>
+  let connection = new WebSocket('ws://' + location.hostname + ':81/');
+  connection.onmessage = function(event) {
+    let data = JSON.parse(event.data);
+    if (data.type === "pulses") {
+      document.getElementById("place").innerText = "Nombre de places: " + data.valeur;
+    }
+  };
+  </script>
+</head>
+<body>
+  <div class="container">
+  <h2 id="place">Nombre de places: 1500</h2>
+  </div>
+</body>
+</html>
+)rawliteral";
+
+// Détection interruption (coupure du laser)
+void ICACHE_RAM_ATTR laserInterruption() {
+  unsigned long maintenant = millis();
+  if ((maintenant - temps) > seuilTemps) {  // Anti-rebond
+    temps = maintenant;
+    
+    if (pulses > 0) {
+      pulses--;
+      Serial.print("Laser coupé ! Places restantes : ");
+      Serial.println(pulses);
+
+      // Envoi WebSocket
+      String message = "{\"type\":\"pulses\",\"valeur\":" + String(pulses) + "}";
+      webSocket.broadcastTXT(message);
+    }
+  }
+}
+
+// Gestion WebSocket
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  if (type == WStype_CONNECTED) {
+    Serial.printf("Client #%u connecté\n", num);
+    String message = "{\"type\":\"pulses\",\"valeur\":" + String(pulses) + "}";
+    webSocket.sendTXT(num, message);
+  } else if (type == WStype_DISCONNECTED) {
+    Serial.printf("Client #%u déconnecté\n", num);
+  }
+}
+
+// Routes HTTP
+void accueilServeur() {
+  server.send(200, "text/html", htmlPage);
+}
+void serveurNotFound() {
+  server.send(404, "text/plain", "404: Non trouvé");
+}
+
+void setup() {
+  pinMode(D7, INPUT_PULLUP);  // Capteur laser
+  pinMode(D8, OUTPUT);        // LED témoin
+
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  Serial.print("Connexion à WiFi ");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnecté ! IP : " + WiFi.localIP().toString());
+
+  // Serveur HTTP
+  server.on("/", accueilServeur);
+  server.onNotFound(serveurNotFound);
+  server.begin();
+
+  // WebSocket
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+
+  // Interruption sur coupure laser
+  attachInterrupt(digitalPinToInterrupt(D7), laserInterruption, RISING);
+
+  // Clignotement LED au démarrage
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(D8, HIGH); delay(200);
+    digitalWrite(D8, LOW); delay(200);
+  }
+}
+
+void loop() {
+  digitalWrite(D8, digitalRead(D7) ? LOW : HIGH); // Allume LED si faisceau est bloqué
+  server.handleClient();
+  webSocket.loop();
+}
