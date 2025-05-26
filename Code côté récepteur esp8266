@@ -1,0 +1,237 @@
+
+// Code côté récepteur esp8266
+
+#include <WebSocketsServer.h>
+#include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+
+
+//identifiants WiFi
+unsigned long temps = millis();
+unsigned long seuilTemps = 500;
+uint16_t compteur_debug = 0;
+const char* ssid = "NETGEAREA758B-g026";
+const char* password = "boulerouge62219!";
+//Nom de la balise
+const char* balise = "Laser 1";
+ESP8266WebServer server(80);
+HTTPClient httpClient;
+WiFiClient client;
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+volatile unsigned int cpt = 0, pulses_tm = 0, pulses = 11;
+volatile bool flag = false;
+String htmlPage = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Balise Laser Blaise Robotic</title>
+  <meta charset="UTF-8">
+  <style>
+	body {
+  	font-family: Arial, sans-serif;
+  	background-color: #f0f0f0; margin: 0; padding: 0;
+  	}
+	 
+	.container {
+  	width: 100%;
+  	max-width: 600px;
+  	margin: 50px auto;
+  	padding: 20px;
+  	background-color: #fff;
+  	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  	}
+	 
+	h1 {
+  	text-align: center;
+  	color: #333;
+  	}
+	 
+	h2 { text-align: center; color: #333;
+  	}
+	 
+	.value {
+  	font-size: 2em;
+  	text-align: center;
+  	margin: 20px 0;
+  	}
+	 
+	.buttons {
+  	display: flex;
+  	justify-content: center;
+  	}
+	 
+	button {
+  	padding: 10px 20px; margin: 0 10px;
+  	border: none; border-radius: 4px;
+  	background-color: #4CAF50; color: white;
+  	cursor: pointer;
+  	}
+	 
+	button:hover {
+  	background-color: #45a049;
+  	}
+  	 
+	.time {
+  	font-size: 3em;
+  	margin: 20px 0;
+  	color: red;
+  	}
+ 	#place{
+  	display: flex;
+  	justify-content: center;
+  	text-align: center;
+  	align-items: center;
+  	}
+  </style>
+  <script>
+  var connection = new WebSocket('ws://' + location.hostname + ':81/') ;
+	function envoieCommande(commande) {
+  	connection.send(commande);
+	}
+	connection.onmessage = function(event) {
+	//Gestion des événements provenant du serveur
+	var data = JSON.parse(event.data);
+	if (data.type == "pulses")
+  	{
+     	document.getElementById("place").innerHTML = "Nombre de places: " + 1;
+  	}
+	}
+  </script>
+</head>
+<body>
+  <div class="container">
+	<div class="buttons">
+  	<button onclick="envoieCommande('incPulses')">Incrémenter</button>
+  	<button onclick="envoieCommande('decPulses')">Décrémenter</button>
+	</div>
+	<div>
+    	<div id="place">Nombre de places: 15000</div>
+	</div>
+	<br>
+  </div>
+</body>
+</html>
+)rawliteral";
+
+
+void ICACHE_RAM_ATTR change() {
+  if (!flag)
+  {
+  flag = !flag;
+  compteur_debug++;
+  Serial.print("Coupée ");
+  Serial.println(compteur_debug);
+  temps = millis();
+  }
+}
+
+void traitementPOST()
+{
+// Vérifie si la méthode de la requête est POST
+if (server.method() == HTTP_POST)
+{
+String message = server.arg("plain");
+Serial.println("Données reçues : " + message);
+server.send(200, "text/plain", "Requête POST reçue => Données : " + message);
+}
+else
+{
+server.send(405, "text/plain", "Méthode non autorisée");
+}
+}
+
+void serveurNotFound()
+{
+server.send(404, "text/plain", "404: Non trouvé");
+}
+void accueilServeur()
+{
+ server.send(200, "text/html", htmlPage);
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  if(type == WStype_CONNECTED) {
+	Serial.printf("Client #%u connecté\n", num);
+	// Envoyer la valeur actuelle de pulses au client connecté
+	String message = "{\"type\":\"pulses\",\"valeur\":" + String(pulses) + "}";
+	webSocket.sendTXT(num, message);
+  }
+  else if(type == WStype_DISCONNECTED) {
+	Serial.printf("Client #%u déconnecté\n", num);
+  }
+  else if(type == WStype_TEXT) {
+	String msg = String((char*)payload);
+	Serial.printf("Message du client #%u: %s\n", num, msg.c_str());
+	if (msg == "incPulses") {
+  	pulses++;
+	} else if (msg == "decPulses") {
+  	if (pulses > 0) pulses--;
+	}
+	String message = "{\"type\":\"pulses\",\"valeur\":" + String(pulses) + "}";
+	webSocket.broadcastTXT(message);
+  }
+}
+void setup() {
+  pinMode(D7,INPUT_PULLUP);  // Configure D6 comme entrée pour compter les impulsions
+  pinMode(D8, OUTPUT);
+  attachInterrupt(digitalPinToInterrupt(D7), change, RISING);  // Attache l'interruption sur D6 pour les fronts montants
+  Serial.begin(115200);  // Initialisation du port série pour afficher les informations
+
+  WiFi.begin(ssid, password);
+  Serial.print("Connexion à ");
+  Serial.println(ssid);
+  while (WiFi.status() != WL_CONNECTED) {
+	delay(1000);
+	Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connecté.");
+  Serial.print("Adresse IP: ");
+  Serial.println(WiFi.localIP());
+
+  //gene_38k();
+
+  server.on("/", accueilServeur);
+  server.onNotFound(serveurNotFound);
+  server.on("/retour", HTTP_POST, traitementPOST);
+  server.begin();
+
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+ 
+
+  for (int flash = 0; flash < 10; flash++)
+  {
+	digitalWrite(D8, LOW);
+	delay(300);
+	digitalWrite(D8, HIGH);
+	delay(300);
+  }
+ 
+ 
+}
+
+void loop() {
+ 
+  if (flag){
+	if (millis() - temps > seuilTemps)
+  	{
+    	flag = !flag;
+  	}
+  }
+
+  if (digitalRead(D7))
+	{
+  	digitalWrite(D8, LOW);
+	}else
+	{ digitalWrite(D8, HIGH);
+	}
+ 
+ 
+  server.handleClient();
+  webSocket.loop();
+ 
+}
