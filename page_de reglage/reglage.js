@@ -10,3 +10,4 @@ function goToIP(inputId) {
         alert("Veuillez entrer une adresse IP valide.");
     }
 }
+

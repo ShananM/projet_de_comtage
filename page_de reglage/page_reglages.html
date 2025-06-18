@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Configuration</title>
-    <link rel="stylesheet" href="/page_de reglage/reglage.css">
+    <link rel="stylesheet" href="reglage.css">
 </head>
 <body>
     <div class="container">
-        <h2>Réglage</h2>
+        <h2>Configuration</h2>
 
+        
         <!-- SSID + Mot de passe -->
         <div class="input-group" data-validate="Identifiant requis">
             <label for="user_login">Identifiant Wi-Fi (SSID) :</label>
@@ -25,10 +26,19 @@
         <div class="input-group">
             <label for="ip-mode">Mode d'obtention IP :</label>
             <select id="ip-mode" onchange="toggleIPFields()">
-                <option value="dhcp">DHCP (automatique)</option>
                 <option value="static">Statique (manuelle)</option>
+                <option value="dhcp">DHCP (automatique)</option>
+                
             </select>
         </div>
+        <label for="admin">Mode au demarage </label>
+        <select id="admin" name="admin">
+            <option value="oui">ON</option>
+            <option value="non">OFF</option>
+        </select>
+
+
+
 
         <!-- Champs IP statique -->
         <div id="ip-settings" style="display: none;">
@@ -41,10 +51,14 @@
                 <input type="text" id="subnet-mask" placeholder="ex: 255.255.255.0">
             </div>
             <div class="input-group">
-                <label for="gateway">Passerelle :</label>
+                <label for="gateway">Brocker :</label>
                 <input type="text" id="gateway" placeholder="ex: 192.168.1.1">
             </div>
         </div>
+        <div class="input-group">
+                <label for="gateway">ID du récepteur :</label>
+                <input type="text" id="gateway" placeholder="">
+            </div>
 
         <!-- Bouton de validation -->
         <button type="submit" onclick="submitConfig()">Se connecter</button>
@@ -76,6 +90,48 @@
 
             // Ici tu peux envoyer les infos via AJAX ou fetch()
         }
-    </script>
+        </script>
+    
+    <!--Couloir 
+    <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 1" id="ip-e1e1" placeholder="IP 1">
+            <button onclick="goToIP('ip-e1e1')">Accéder</button>
+        </div>
+        
+        <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 2" id="ip-e1e2" placeholder="IP 2">
+            <button onclick="goToIP('ip-e1e2')">Accéder</button>
+        </div>
+
+        <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 3" id="ip-e1e3" placeholder="IP 3">
+            <button onclick="goToIP('-ip-e1e3')">Accéder</button>
+        </div>
+        
+        <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 4" id="ip-e1e4" placeholder="IP 4">
+            <button onclick="goToIP('ip-e1e4')">Accéder</button>
+        </div>
+
+        <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 5" id="ip-e1e5" placeholder="IP 5">
+            <button onclick="goToIP('ip-e1e5')">Accéder</button>
+        </div>
+        
+        <div class="input-group">
+            <label><input placeholder="Entre un nom"></label>
+            <input placeholder="IP couloir 6" id="ip-e1e6" placeholder="IP 6">
+            <button onclick="goToIP('ip-e1e6')">Accéder</button>
+        </div>
+
+
+    </div>-->
+
 </body>
+
 </html>
