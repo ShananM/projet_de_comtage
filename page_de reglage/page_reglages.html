@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration</title>
+    <link rel="stylesheet" href="/page_de reglage/reglage.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Réglage</h2>
+
+        <!-- SSID + Mot de passe -->
+        <div class="input-group" data-validate="Identifiant requis">
+            <label for="user_login">Identifiant Wi-Fi (SSID) :</label>
+            <input class="input100" type="text" id="user_login" name="user_login" placeholder="Identifiant" required>
+        </div>
+
+        <div class="input-group" data-validate="Mot de passe requis">
+            <label for="user_mdp">Mot de passe Wi-Fi :</label>
+            <input class="input100" type="password" id="user_mdp" name="user_mdp" placeholder="Mot de passe" required>
+        </div>
+
+        <!-- Mode IP (DHCP ou Statique) -->
+        <div class="input-group">
+            <label for="ip-mode">Mode d'obtention IP :</label>
+            <select id="ip-mode" onchange="toggleIPFields()">
+                <option value="dhcp">DHCP (automatique)</option>
+                <option value="static">Statique (manuelle)</option>
+            </select>
+        </div>
+
+        <!-- Champs IP statique -->
+        <div id="ip-settings" style="display: none;">
+            <div class="input-group">
+                <label for="static-ip">Adresse IP :</label>
+                <input type="text" id="static-ip" placeholder="ex: 192.168.1.100">
+            </div>
+            <div class="input-group">
+                <label for="subnet-mask">Masque de sous-réseau :</label>
+                <input type="text" id="subnet-mask" placeholder="ex: 255.255.255.0">
+            </div>
+            <div class="input-group">
+                <label for="gateway">Passerelle :</label>
+                <input type="text" id="gateway" placeholder="ex: 192.168.1.1">
+            </div>
+        </div>
+
+        <!-- Bouton de validation -->
+        <button type="submit" onclick="submitConfig()">Se connecter</button>
+    </div>
+
+    <script src="reglage.js"></script>
+    <script>
+        function toggleIPFields() {
+            const mode = document.getElementById("ip-mode").value;
+            const ipFields = document.getElementById("ip-settings");
+            ipFields.style.display = (mode === "static") ? "block" : "none";
+        }
+
+        function submitConfig() {
+            const ssid = document.getElementById("user_login").value;
+            const pwd = document.getElementById("user_mdp").value;
+            const mode = document.getElementById("ip-mode").value;
+
+            let message = `SSID : ${ssid}\nMot de passe : ${pwd}\nMode IP : ${mode}`;
+
+            if (mode === "static") {
+                const ip = document.getElementById("static-ip").value;
+                const mask = document.getElementById("subnet-mask").value;
+                const gateway = document.getElementById("gateway").value;
+                message += `\nAdresse IP : ${ip}\nMasque : ${mask}\nPasserelle : ${gateway}`;
+            }
+
+            alert(message);
+
+            // Ici tu peux envoyer les infos via AJAX ou fetch()
+        }
+    </script>
+</body>
+</html>
