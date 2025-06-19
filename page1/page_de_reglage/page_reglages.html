@@ -9,7 +9,18 @@
 <body>
     <div class="container">
         <h2>Configuration</h2>
-
+        
+        <script>
+            function verifierMotDePasse() {
+            var motDePasse = document.getElementById("password").value;
+            if (motDePasse === "moncode123") {
+                document.getElementById("formulaire").style.display = "block";
+                document.getElementById("login").style.display = "none";
+            } else {
+                alert("Mot de passe incorrect !");
+            }
+            }
+        </script>
         
         <!-- SSID + Mot de passe -->
         <div class="input-group" data-validate="Identifiant requis">
@@ -26,9 +37,9 @@
         <div class="input-group">
             <label for="ip-mode">Mode d'obtention IP :</label>
             <select id="ip-mode" onchange="toggleIPFields()">
-                <option value="static">Statique (manuelle)</option>
-                <option value="dhcp">DHCP (automatique)</option>
                 
+                <option value="dhcp">DHCP (automatique)</option>
+                <option value="static">Statique (manuelle)</option>
             </select>
         </div>
         <label for="admin">Mode au demarage </label>
@@ -63,6 +74,7 @@
         <!-- Bouton de validation -->
         <button type="submit" onclick="submitConfig()">Se connecter</button>
     </div>
+    
 
     <script src="reglage.js"></script>
     <script>
