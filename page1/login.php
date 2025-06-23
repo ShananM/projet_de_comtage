@@ -4,7 +4,6 @@ $identifiant_correct = "blaise"; // 🔒 À changer
 $mot_de_passe_correct = "blaise1234"; // 🔒 À changer
 
 // Si formulaire envoyé
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // On sécurise un minimum l'entrée
     $username = isset($_POST['username']) ? trim($_POST['username']) : '';
@@ -23,11 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     } else {
-        // Mot de passe incorrect
+        // Mot de passe incorrecto
+
         $erreur = "Mot de passe incorrect.";
-        echo "erreur mdp inccorect fdp de merde ";
+        echo "erreur mdp ";
     }
 
 ?>
-
-
