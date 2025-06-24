@@ -1,28 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content ="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="reglage.css">
-    <title>Menu déroulant</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réglage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      text-align: center;
+      padding: 50px;
+      margin: 0;
+    }
+
+    h1 {
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    .conteneur-mid {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    ul{
+      padding: 0;
+    }
+
+    .menu li {
+      list-style: none;
+    }
+
+    .menu a {
+      display: block;
+      width: 200px;
+      padding: 30px 20px;
+      background-color: white;
+      color: #2c3e50;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .menu a:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+      background-color: #f8f8f8;
+    }
+  </style>
 </head>
-    <body>
-        <div class="conteneur-flexible ligne">
-			<div class="element-flexible"><B><FONT size="6pt">E et S</FONT></B></div>
-		</div>
-        <div class="conteneur-mid">
-            <div id="nav">
-                <ul class="menu">
-                    <li>
-                        <a href="page_reglages.html">Configuration</a>
-                    </li>
-                    <li>
-                        <a href="comptage.html">Comptage</a>
-                    </li>
-                    
-                </ul>
-            </div>
-        </div>
-       
-    </body>
+<body>
+
+  <h1>Réglage</h1>
+
+  <div class="conteneur-mid">
+    <ul class="menu">
+      <li><a href="page_reglages.html">Configuration</a></li>
+    </ul>
+    <ul class="menu">
+      <li><a href="comptage.html">Comptage</a></li>
+    </ul>
+
+  </div>
+
+</body>
 </html>

@@ -1,11 +1,129 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>comptage</title>
+  <meta charset="UTF-8">
+  <title>Compteur de personnes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #2c3e50, #3498db);
+      margin: 0;
+      padding: 40px 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      color: #fff;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 350px;
+      text-align: center;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    #counter {
+      font-size: 48px;
+      color: #3498db;
+      margin: 20px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+      color: white;
+    }
+
+    .btn.add {
+      background-color: #3498db;
+    }
+
+    .btn.add:hover {
+      background-color: #2980b9;
+    }
+
+    .btn.reset {
+      background-color: #e74c3c;
+    }
+
+    .btn.reset:hover {
+      background-color: #c0392b;
+    }
+
+    a.retour {
+      display: inline-block;
+      margin-top: 25px;
+      color: #2c3e50;
+      text-decoration: none;
+      font-weight: bold;
+      border: 2px solid #2c3e50;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    a.retour:hover {
+      background-color: #2c3e50;
+      color: #fff;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
 <body>
-    
+
+  <div class="container">
+    <h1>Compteur de personnes</h1>
+    <p>Nombre de personnes passées</p>
+    <div id="counter">0</div>
+
+    <br>
+    <a class="retour" href="affichage.html">← Retour</a>
+  </div>
+
+  <script>
+    let compteur = 0;
+
+    function ajouterPersonne() {
+      compteur++;
+      document.getElementById("counter").textContent = compteur;
+    }
+
+    function resetCompteur() {
+      compteur = 0;
+      document.getElementById("counter").textContent = compteur;
+    }
+  </script>
+
 </body>
 </html>
