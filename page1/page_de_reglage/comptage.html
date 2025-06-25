@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <title>Compteur de personnes</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #2c3e50;
+      background: linear-gradient(to right, #2c3e50, #3498db);
       color: white;
       text-align: center;
       padding-top: 50px;
@@ -15,6 +17,16 @@
     .compteur {
       font-size: 48px;
       color: #1abc9c;
+    }
+    canvas {
+      width: 100% !important;
+      max-width: 1000px;
+      height: 400px !important;
+      margin: 40px auto;
+      display: block;
+      background-color: #f8f5f5;
+      border-radius: 10px;
+      padding: 10px;
     }
   </style>
 </head>
@@ -24,14 +36,19 @@
   <p>Nombre total de personnes passées :</p>
   <div id="counter" class="compteur">Chargement...</div>
 
+  <canvas id="realtimeChart"></canvas>
+
   <script>
+    let count = 224;
+
     function actualiserCompteur() {
       $.ajax({
         url: '../get_personnes.php',
         type: 'GET',
         dataType: 'json',
         success: function(data) {
-          $('#counter').text(data.total + ' personne(s)');
+          count = data.total;
+          $('#counter').text(count + ' personne(s)');
         },
         error: function() {
           $('#counter').text("Erreur de chargement");
@@ -39,11 +56,79 @@
       });
     }
 
-    // Appel immédiat
     actualiserCompteur();
-
-    // Rafraîchir toutes les 5 secondes
     setInterval(actualiserCompteur, 5000);
+  </script>
+
+  <script>
+    const ctx = document.getElementById('realtimeChart').getContext('2d');
+
+    const data = {
+      labels: [],
+      datasets: [{
+        label: 'Nombre de personnes',
+        data: [],
+        borderColor: '#0bc4a5',
+        backgroundColor: 'rgba(11, 196, 165, 0.2)',
+        tension: 0.4
+      }]
+    };
+
+    const config = {
+      type: 'line',
+      data: data,
+      options: {
+        plugins: {
+          datalabels: {
+            color: '#000',
+            anchor: 'end',
+            align: 'top',
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            formatter: function(value) {
+              return value;
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Heure'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Personnes'
+            },
+            beginAtZero: true
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    };
+
+    const realtimeChart = new Chart(ctx, config);
+
+    function updateChart() {
+      const now = new Date();
+      const timeLabel = now.toLocaleTimeString();
+
+      data.labels.push(timeLabel);
+      data.datasets[0].data.push(count);
+
+      if (data.labels.length > 20) {
+        data.labels.shift();
+        data.datasets[0].data.shift();
+      }
+
+      realtimeChart.update();
+    }
+
+    setInterval(updateChart, 5000);
   </script>
 
 </body>

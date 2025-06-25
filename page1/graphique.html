@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Graphique en Temps Réel</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #263949;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+    }
+    canvas {
+      max-width: 800px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2>Graphique en temps réel</h2>
+  <p>Nombre total de personnes passées :</p>
+  <h1 id="counter">224 personne(s)</h1>
+  <canvas id="realtimeChart"></canvas>
+
+  <script>
+    const ctx = document.getElementById('realtimeChart').getContext('2d');
+
+    const data = {
+      labels: [],
+      datasets: [{
+        label: 'Nombre de personnes',
+        data: [],
+        borderColor: '#0bc4a5',
+        backgroundColor: 'rgba(11, 196, 165, 0.2)',
+        tension: 0.4
+      }]
+    };
+
+    const config = {
+      type: 'line',
+      data: data,
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Heure' } },
+          y: { title: { display: true, text: 'Personnes' }, beginAtZero: true }
+        }
+      }
+    };
+
+    const realtimeChart = new Chart(ctx, config);
+
+    // Donnée initiale
+    let count = 224;
+
+    function updateChart() {
+      const now = new Date();
+      const timeLabel = now.toLocaleTimeString();
+
+      // Simule une mise à jour du compteur
+      const variation = Math.floor(Math.random() * 3); // simulate +0 to +2
+      count += variation;
+
+      data.labels.push(timeLabel);
+      data.datasets[0].data.push(count);
+
+      document.getElementById("counter").innerText = count + " personne(s)";
+
+      // Ne garde que les 20 dernières valeurs
+      if (data.labels.length > 20) {
+        data.labels.shift();
+        data.datasets[0].data.shift();
+      }
+
+      realtimeChart.update();
+    }
+
+    // Met à jour toutes les 2 secondes
+    setInterval(updateChart, 2000);
+  </script>
+</body>
+</html>
