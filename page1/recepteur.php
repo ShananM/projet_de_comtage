@@ -1,29 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuration des capteurs</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 80%;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+      padding: 15px;
+      font-size: 16px;
+    }
+
+    td {
+      padding: 12px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    button {
+      display: block;
+      margin: 40px auto 0 auto;
+      padding: 12px 30px;
+      font-size: 16px;
+      color: white;
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2c80b4;
+    }
+  </style>
+</head>
+<body>
+
 <?php
-// --- Affichage des erreurs pour débogage ---
+// --- Affichage des erreurs ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- Informations de connexion à la base de données ---
-$host = 'localhost';          // Adresse du serveur MySQL
-$user = 'blaise';             // Nom d'utilisateur MySQL
-$pass = 'Blaise1234';         // Mot de passe MySQL
-$db   = 'passage_personnes';  // Nom de la base de données
+// --- Connexion ---
+$host = 'localhost';
+$user = 'blaise';
+$pass = 'Blaise1234';
+$db   = 'passage_personnes';
 
-// --- Récupération du choix principal envoyé par le formulaire ---
-$choix = $_POST['choix'] ?? '';  // Si rien n'est envoyé, on prend une chaîne vide
+$choix = $_POST['choix'] ?? '';
 
 try {
-    // --- Connexion à la base de données avec encodage UTF-8 ---
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Affiche les erreurs SQL
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // --- Sélection des enregistrements selon le type_passage choisi ---
     $stmt = $pdo->prepare("SELECT * FROM recepteur WHERE type_passage = :type");
     $stmt->execute(['type' => $choix]);
-    $resultats = $stmt->fetchAll(PDO::FETCH_ASSOC); // On récupère tous les résultats dans un tableau associatif
+    $resultats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // --- Capteurs récupérés depuis le formulaire (via POST) ---
     $capteurs = [
         'capteurA_droite' => $_POST['capteurA_droite'] ?? '',
         'capteurA_gauche' => $_POST['capteurA_gauche'] ?? '',
@@ -33,44 +99,63 @@ try {
         'capteurC_gauche' => $_POST['capteurC_gauche'] ?? ''
     ];
 
-    // --- Pour chaque capteur, si une valeur est présente, on met à jour la BDD ---
-   foreach ($capteurs as $nomChamp => $valeur) {
-    if ($valeur !== '') {
-        $correspondance = [
-            'Entrees' => 0,
-            'Sorties' => 1,
-        ];
-        $type_passage = $correspondance[$valeur] ?? 0; // Valeur par défaut 0 si non trouvée
-        // Vérifie que le nom du champ correspond bien à "capteurX_direction"
-        if (preg_match('/capteur([ABC])_(droite|gauche)/', $nomChamp, $matches)) {
-            $recepteur = $matches[1];
-            $capteur   = $matches[2];
+    foreach ($capteurs as $nomChamp => $valeur) {
+        if ($valeur !== '') {
+            $correspondance = [
+                'Entrees' => 0,
+                'Sorties' => 1,
+            ];
+            $type_passage = $correspondance[$valeur] ?? 0;
 
-            // Mise à jour SQL
-            $update = $pdo->prepare("UPDATE recepteur SET type_passage = :type_passage WHERE recepteur = :recepteur AND capteur = :capteur");
-            $update->execute([
-                'type_passage' => $type_passage,
-                'recepteur' => $recepteur,
-                'capteur' => $capteur
-            ]);
-        } else {
-            // Optionnel : afficher une erreur si le nom ne correspond pas au format attendu
-            echo "<p style='color:orange;'>Nom de champ inattendu : $nomChamp</p>";
+            if (preg_match('/capteur([ABC])_(droite|gauche)/', $nomChamp, $matches)) {
+                $recepteur = $matches[1];
+                $capteur   = $matches[2];
+
+                $update = $pdo->prepare("UPDATE recepteur SET type_passage = :type_passage WHERE recepteur = :recepteur AND capteur = :capteur");
+                $update->execute([
+                    'type_passage' => $type_passage,
+                    'recepteur' => $recepteur,
+                    'capteur' => $capteur
+                ]);
+            }
         }
     }
-}
 
 } catch (PDOException $e) {
-    // --- En cas d'erreur de connexion ou SQL ---
-    echo "<p style='color:red;'>Erreur de connexion à la base de données : " . $e->getMessage() . "</p>";
-    exit; // On arrête le script
+    echo "<p style='color:red;'>Erreur : " . $e->getMessage() . "</p>";
+    exit;
 }
-
-// --- Affichage simple des données reçues ---
-echo "<h2>Configuration des capteurs :</h2><ul>";
-foreach ($capteurs as $nom => $valeur) {
-    echo "<li><strong>" . htmlspecialchars($nom) . "</strong> : " . htmlspecialchars($valeur) . "</li>";
-}
-echo "</ul>";
 ?>
 
+<h2>Configuration des capteurs</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Capteur</th>
+      <th>Gauche</th>
+      <th>Droite</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Capteur A</td>
+      <td><?= htmlspecialchars($capteurs['capteurA_gauche']) ?></td>
+      <td><?= htmlspecialchars($capteurs['capteurA_droite']) ?></td>
+    </tr>
+    <tr>
+      <td>Capteur B</td>
+      <td><?= htmlspecialchars($capteurs['capteurB_gauche']) ?></td>
+      <td><?= htmlspecialchars($capteurs['capteurB_droite']) ?></td>
+    </tr>
+    <tr>
+      <td>Capteur C</td>
+      <td><?= htmlspecialchars($capteurs['capteurC_gauche']) ?></td>
+      <td><?= htmlspecialchars($capteurs['capteurC_droite']) ?></td>
+    </tr>
+  </tbody>
+</table>
+
+<button onclick="window.history.back()">Retour</button>
+
+</body>
+</html>
