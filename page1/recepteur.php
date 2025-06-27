@@ -74,17 +74,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- Connexion ---
-$host = 'localhost';
-$user = 'blaise';
-$pass = 'Blaise1234';
-$db   = 'passage_personnes';
+include("connexionBDD.php");
 
 $choix = $_POST['choix'] ?? '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 
     $stmt = $pdo->prepare("SELECT * FROM recepteur WHERE type_passage = :type");
     $stmt->execute(['type' => $choix]);

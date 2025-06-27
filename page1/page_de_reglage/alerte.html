@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Niveaux de Batterie</title>
-  
-
   <style>
-    
     table {
       border-collapse: collapse;
       width: 50%;
@@ -74,98 +71,92 @@
   </table>
 
   <script>
-    const noms = ['R-A', 'R-B', 'R-C'];//, 'E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+    const noms = ['R-A', 'R-B', 'R-C', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
 
     function getBatteryClass(value) {
       if (value < 4.2) return 'low';
-      else if (value < 8.4) return 'medium';
-      else return 'high';
+      if (value < 8.4) return 'medium';
+      return 'high';
     }
 
-    function chargerNiveaux() {
+    function mettreAJourAffichage(data) {
+      let html = '';
+
+      noms.forEach(nom => {
+        const valeur = data[nom];
+        const niveau = valeur !== undefined ? parseFloat(valeur) : null;
+
+        let niveauAffiche = '-';
+        let jaugeHTML = '-';
+
+        if (niveau !== null && !isNaN(niveau)) {
+          const classe = getBatteryClass(niveau);
+          const pourcentage = Math.min(100, (niveau / 10) * 100); // sécurité
+          niveauAffiche = niveau.toFixed(1);
+
+          jaugeHTML = `
+            <div class="progress-bar-container">
+              <div class="progress-bar ${classe}" style="width: ${pourcentage}%"></div>
+            </div>
+          `;
+        }
+
+        html += `
+          <tr>
+            <td>${nom}</td>
+            <td>${niveauAffiche}</td>
+            <td>${jaugeHTML}</td>
+          </tr>`;
+      });
+
+      document.getElementById('batterie-table').innerHTML = html;
+    }
+
+    function afficherAlertes(data) {
+      const alertesRouge = [];
+      const alertesOrange = [];
+
+      noms.forEach(nom => {
+        const niveau = parseFloat(data[nom]);
+        if (!isNaN(niveau)) {
+          if (niveau < 4.2) alertesRouge.push(nom);
+          else if (niveau < 8.4) alertesOrange.push(nom);
+        }
+      });
+
+      document.querySelectorAll('.alerte-batterie').forEach(el => el.remove());
+
+      let message = '';
+      if (alertesRouge.length) message += `🔴 Batterie CRITIQUE : ${alertesRouge.join(', ')}\n`;
+      if (alertesOrange.length) message += `🟠 Batterie FAIBLE : ${alertesOrange.join(', ')}`;
+
+      if (message) {
+        const div = document.createElement('div');
+        div.className = 'alerte-batterie';
+        div.textContent = message;
+        div.style.backgroundColor = alertesRouge.length ? '#f44336' : '#ff9800';
+        document.body.appendChild(div);
+      }
+    }
+
+    function chargerDonnees() {
       fetch('../alerte.php')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) throw new Error('Erreur de réponse');
+          return response.json();
+        })
         .then(data => {
-          let html = '';
-
-          noms.forEach(nom => {
-            const niveau = data[nom] !== undefined ? parseFloat(data[nom]) : null;
-            let niveauAffiche = '-';
-            let jaugeHTML = '-';
-
-            if (!isNaN(niveau)) {
-              const classe = getBatteryClass(niveau);
-              const pourcentage = (niveau / 10) * 100;
-              niveauAffiche = niveau.toFixed(1);
-
-              jaugeHTML = `
-                <div class="progress-bar-container">
-                  <div class="progress-bar ${classe}" style="width: ${pourcentage}%"></div>
-                </div>
-              `;
-            }
-
-            html += `
-              <tr>
-                <td>${nom}</td>
-                <td>${niveauAffiche}</td>
-                <td>${jaugeHTML}</td>
-              </tr>`;
-          });
-
-          document.getElementById('batterie-table').innerHTML = html;
+          mettreAJourAffichage(data);
+          afficherAlertes(data);
         })
         .catch(error => {
-          console.error('Erreur de récupération :', error);
+          console.error('Erreur de récupération des données :', error);
         });
     }
 
-    function verifierAlertesBatterie() {
-      fetch('../alerte.php')
-        .then(response => response.json())
-        .then(data => {
-          let alertesRouge = [];
-          let alertesOrange = [];
-
-          noms.forEach(nom => {
-            const niveau = parseFloat(data[nom]);
-            if (!isNaN(niveau)) {
-              if (niveau < 4.2) {
-                alertesRouge.push(nom);
-              } else if (niveau < 8.4) {
-                alertesOrange.push(nom);
-              }
-            }
-          });
-
-          document.querySelectorAll('.alerte-batterie').forEach(el => el.remove());
-
-          let message = '';
-          if (alertesRouge.length > 0) {
-            message += `🔴 Batterie CRITIQUE : ${alertesRouge.join(', ')}\n`;
-          }
-          if (alertesOrange.length > 0) {
-            message += `🟠 Batterie FAIBLE : ${alertesOrange.join(', ')}`;
-          }
-
-          if (message) {
-            const div = document.createElement('div');
-            div.className = 'alerte-batterie';
-            div.textContent = message;
-            div.style.backgroundColor = alertesRouge.length > 0 ? '#f44336' : '#ff9800';
-            document.body.appendChild(div);
-          }
-        })
-        .catch(error => {
-          console.error('Erreur d’alerte batterie :', error);
-        });
-    }
-
-    // Lancer au démarrage + mise à jour
-    chargerNiveaux();
-    verifierAlertesBatterie();
-    setInterval(chargerNiveaux, 5000);
-    setInterval(verifierAlertesBatterie, 10000);
+    // Initialisation et mise à jour périodique
+    chargerDonnees();
+    setInterval(chargerDonnees, 5000);
   </script>
 </body>
 </html>
